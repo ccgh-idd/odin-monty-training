@@ -101,7 +101,6 @@ We'll use an SIR model to simulate incidence data.
 You can choose between a deterministic and a stochastic version of the SIR model, which are written in separate files for readability.
 Head to the files to see the details of the models.
 You will see some comments there explaining the different parts of the model.
-The
 
 ```{r Load model, message=FALSE, warning=FALSE}
 # Load model
@@ -113,7 +112,7 @@ model_file <- paste0(model_path, "deterministic SIR odin.R")
 gen_sir <- odin(model_file)
 ```
 
-# Step 1: simple model run
+# Step 1: Simple model run
 
 This can be helpful to check that your model is behaving as expect (e.g., no negative numbers for people).
 We will also use to generate data to fit the model to later.
@@ -147,7 +146,9 @@ We need to create a dust system from our *odin* model in order to simulate it.
 You can choose how many steps per day you want to take with the *dt* argument and how many runs you want to simulate with *n_particles*.
 All systems start with a zero state unless you set them via *dust_system_set_state()* or *dust_system_set_state_initial()*.
 
-In case you're using a stochastic model, each run will produce a different result. Since, we're using the model to produce data here, we want to make sure that we get a clear epidemic curve so we run the model until we get a peak of at least 50 infected individuals.
+In case you're using a stochastic model, each run will produce a different result.
+Since, we're using the model to produce data here, we want to make sure that we get a clear epidemic curve so we run the model until we get a peak of at least 50 infected individuals.
+
 ```{r Create system}
 max_inf <- 0
 
@@ -216,7 +217,7 @@ We will fit the model to the generated incidence data using the *monty* package.
 To fit the model, we need a function that tells us if the model output is close to the observed data.
 This is the comparison function that is used by the particle filter and that computes the log-likelihood.
 When using *odin2* and *monty*, this is done in the model (see the last three lines of the model code).
-We can now build a particle filter that will use this function and test the outputs of it.
+We can now build a particle filter that will use this function and test the outputs.
 
 ```{r Build a filter}
 # Build a filter and test it using the true parameter values
@@ -350,12 +351,7 @@ sampler_mh <- monty_sampler_adaptive(vcv)
 
 # This takes about about 2 minutes on my laptop for the deterministic model and 
 # 8 minutes for the stochastic model
-samples_mh <- monty_sample(model, 
-                           sampler_mh, 
-                           20000, 
-                           initial = packer$pack(true_pars),
-                           n_chains = 2,
-                           runner = runner)
+samples_mh <- monty_sample(...)
 ```
 
 # Step 4: Check results
@@ -380,12 +376,12 @@ summarise_draws(draws_rw)
 
 ```{r MH summary}
 # Repeat this here for the MH algortihm
-draws_mh <- as_draws_df(samples_mh)
-summarise_draws(draws_mh)
+draws_mh <- as_draws_df(...)
+summarise_draws(...)
 ```
 
 You can already see that the estimates are pretty good.
-If they weren't this could be due to poor mixing of the chains.
+If they weren't, this could be due to poor mixing of the chains.
 We will check this in the next step.
 
 # Step 5: Convergence diagnostics
@@ -399,8 +395,7 @@ matplot(samples_rw$density, type = "l", lty = 1,
 
 ```{r MH density}
 # Repeat this here for the MH algortihm
-matplot(samples_mh$density, type = "l", lty = 1,
-        xlab = "Sample", ylab = "Log posterior probability density")
+matplot(...)
 ```
 
 ```{r RW parameter trace}
@@ -411,7 +406,7 @@ mcmc_trace(draws_rw, facet_args = list(ncol = 1, strip.position = "left"))
 
 ```{r MH parameter trace}
 # Repeat this here for the MH algorithm
-mcmc_trace(draws_mh, facet_args = list(ncol = 1, strip.position = "left"))
+mcmc_trace(...)
 ```
 
 ```{r RW posterior incertainty}
@@ -423,9 +418,7 @@ mcmc_intervals(draws_array_rw, pars = "gamma")
 
 ```{r MH posterior incertainty}
 # Repeat this here for the MH algortihm
-draws_array_mh <- as_draws_array(draws_mh)
-mcmc_intervals(draws_array_mh, pars = "beta")
-mcmc_intervals(draws_array_mh, pars = "gamma")
+draws_array_mh <- ...
 ```
 
 ```{r RW univeriate posterior}
@@ -435,7 +428,7 @@ mcmc_hist(draws_array_rw)
 
 ```{r MH univeriate posterior}
 # Repeat this here for the MH algortihm 
-mcmc_hist(draws_array_mh)
+mcmc_hist(...)
 ```
 
 ```{r RW fit}
@@ -466,27 +459,7 @@ incidence_rw %>%
 
 ```{r MH fit}
 # Repeat this here for the MH algorithm
-trajectories_mh <- dust_unpack_state(filter,
-                                  samples_mh$observations$trajectories)
-incidence_mh <- array(trajectories_mh$incidence, c(11, 20000)) 
-# 11 time steps, 20000 samples
-
-# Save this as a dataframe for easier plotting
-incidence_mh <- data.frame(incidence$time, incidence_mh)
-colnames(incidence_mh) <- c("time", paste0("sample_", 1:20000))
-
-# Plot the fit
-incidence_mh %>% 
-  pivot_longer(cols = -time, names_to = "sample", values_to = "seroconversion") %>%
-  ggplot(aes(x = time, y = seroconversion)) +
-  geom_line(aes(group = sample, col = "Fitted data")) +
-  geom_point(data = incidence, aes(x = time, y = cases, col = "Observed data")) +
-  labs(x = "Age (days)", 
-       y = " Proportion seroconverted\n",
-       colour = "Data type") +
-  scale_color_manual(values = c("Fitted data" = "#5F9EA0", 
-                                "Observed data" = "red")) +
-  theme_minimal()
+trajectories_mh <- ...
 ```
 
 # Step 6: Tuning the MCMC (optional)
@@ -522,13 +495,13 @@ matplot(samples_thinned$density, type = "l", lty = 1,
 
 ```{r Tuned trace}
 # Check the trace for each parameter
-draws_thinned <- as_draws_df(samples_thinned)
-mcmc_trace(draws_thinned, facet_args = list(ncol = 1, strip.position = "left"))
+draws_thinned <- as_draws_df(...)
+mcmc_trace(...)
 ```
 
 ```{r Tuned summary}
 # Look at the summary statistics
-summarise_draws(draws_thinned)
+summarise_draws(...)
 ```
 
 ```{r Tuned fit}
@@ -561,9 +534,9 @@ A better way of displaying the fit is to plot the credible intervals of the post
 incidence_summary <- incidence_df %>% 
   pivot_longer(cols = -time, names_to = "sample", values_to = "cases") %>%
   group_by(time) %>%
-  summarise(median = median(cases),
-            lower_95 = quantile(cases, 0.025),
-            upper_95 = quantile(cases, 0.975))
+  summarise(median = ...,
+            lower_95 = ...,
+            upper_95 = ...)
 
 # Plot credible intervals
 incidence_summary %>% 
