@@ -105,7 +105,7 @@ You will see some comments there explaining the different parts of the model.
 ```{r Load model, message=FALSE, warning=FALSE}
 # Load model
 # change the path to where your model is saved
-model_path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/Training/To share/Model building and fitting with monty/"
+model_path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/Training/To share/odin-monty-training//"
 model_file <- paste0(model_path, "deterministic SIR odin.R")
 # model_file <- paste0(model_path, "stochastic SIR odin.R")
 
@@ -186,15 +186,15 @@ states <- data.frame(time = time,
 
 # Plot
 states %>% 
-  pivot_longer(cols = -time, names_to = "compartment", values_to = "individuals") %>%
-  ggplot(aes(x = time, y = individuals, color = compartment)) +
+  pivot_longer(cols = -time, names_to = "Compartment", values_to = "individuals") %>%
+  ggplot(aes(x = time, y = individuals, color = Compartment)) +
   geom_line(linewidth = 1) +
   scale_color_manual(values = palette) +
   labs(x = "Time (days)", y = "Number of individuals") +
   theme_minimal()
 ```
 
-We will extract the proportion of cases at specific time points to generate incidence data.
+We will extract the number of cases at specific time points to generate incidence data.
 
 ```{r Simulate data}
 # Extract the number of cases at specific time points
@@ -315,9 +315,9 @@ vcv <- diag(2) * 0.02 # We set up a naive one with a small variance
 
 # Finally, we need to define the model properties
 # If using the stochastic model, comment the next 2 lines and un-comment the third
-# properties_deter <- monty_model_properties(is_stochastic = F)
-# model <- monty_model(posterior, properties = properties_deter)
-model <- monty_model(posterior)
+properties_deter <- monty_model_properties(is_stochastic = F)
+model <- monty_model(posterior, properties = properties_deter)
+# model <- monty_model(posterior)
 ```
 
 Finally, we need to choose our sampler.
@@ -367,7 +367,7 @@ summarise_draws(draws_rw)
 #   - Empirical (sample) mean
 #   - Empirical (sample) median
 #   - Empirical (sample) standard deviation
-#   - “Naive” standard error, that is the standard error of the mean 
+#   - Mean absolute deviation (MAD): “Naive” standard error, that is the standard error of the mean 
 #     (adjusting for sample size).
 #   - Quantiles for each variable
 #   - R hat (should be < 1.1)
@@ -521,7 +521,8 @@ incidence_df %>%
   geom_line(aes(group = sample, col = "Fitted data")) +
   geom_point(data = incidence, aes(x = time, y = cases, col = "Observed data")) +
   labs(x = "Time (days)", 
-       y = " Incidence\n") +
+       y = " Incidence\n",
+       colour = "Data type") +
   scale_color_manual(values = c("Fitted data" = "#5F9EA0", 
                                 "Observed data" = "red")) +
   theme_minimal()
